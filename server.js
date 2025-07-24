@@ -1,41 +1,27 @@
 const express = require('express');
-const request = require('request');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ CORS headers for browser requests
+// ✅ Global CORS + Header Injection Middleware
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+
+  // ✅ Default headers in case forwarded to any internal route
+  req.headers['referer'] = 'https://appx-play.akamai.net.in/';
+  req.headers['user-agent'] = 'Mozilla/5.0';
+
   next();
 });
 
-// ✅ Root check
+// ✅ Root endpoint only
 app.get('/', (req, res) => {
-  res.send('✅ AppX Proxy API Running (with CORS)');
+  res.send('✅ AppX Server Running (No Proxy, Default Headers Set)');
 });
 
-// ✅ Proxy route
-app.get('/api/proxy', (req, res) => {
-  const { url } = req.query;
-  if (!url) return res.status(400).send('❌ Missing "url" parameter');
-
-  const decodedUrl = decodeURIComponent(url);
-
-  request({
-    url: decodedUrl,
-    headers: {
-      'Referer': 'https://appx-play.akamai.net.in/',
-      'User-Agent': 'Mozilla/5.0'
-    }
-  })
-  .on('error', err => res.status(500).send('Proxy Error: ' + err.message))
-  .pipe(res);
-});
-
-// ✅ Start server
+// ✅ Start the server
 app.listen(PORT, () => {
-  console.log(`🚀 Proxy server listening on port ${PORT}`);
+  console.log(`🚀 AppX server running on port ${PORT}`);
 });
